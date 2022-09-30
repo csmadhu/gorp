@@ -86,10 +86,9 @@ func SelectNullStr(e SqlExecutor, query string, args ...interface{}) (sql.NullSt
 // SelectOne executes the given query (which should be a SELECT statement)
 // and binds the result to holder, which must be a pointer.
 //
-// If no row is found, an error (sql.ErrNoRows specifically) will be returned
+// # If no row is found, an error (sql.ErrNoRows specifically) will be returned
 //
 // If more than one row is found, an error will be returned.
-//
 func SelectOne(m *DbMap, e SqlExecutor, holder interface{}, query string, args ...interface{}) error {
 	t := reflect.TypeOf(holder)
 	if t.Kind() == reflect.Ptr {
@@ -106,14 +105,9 @@ func SelectOne(m *DbMap, e SqlExecutor, holder interface{}, query string, args .
 	}
 
 	if t.Kind() == reflect.Struct {
-		var nonFatalErr error
-
 		list, err := hookedselect(m, e, holder, query, args...)
 		if err != nil {
-			if !NonFatalError(err) { // FIXME: double negative, rename NonFatalError to FatalError
-				return err
-			}
-			nonFatalErr = err
+			return err
 		}
 
 		dest := reflect.ValueOf(holder)
@@ -140,7 +134,7 @@ func SelectOne(m *DbMap, e SqlExecutor, holder interface{}, query string, args .
 			return sql.ErrNoRows
 		}
 
-		return nonFatalErr
+		return nil
 	}
 
 	return selectVal(e, holder, query, args...)
@@ -174,14 +168,9 @@ func selectVal(e SqlExecutor, holder interface{}, query string, args ...interfac
 func hookedselect(m *DbMap, exec SqlExecutor, i interface{}, query string,
 	args ...interface{}) ([]interface{}, error) {
 
-	var nonFatalErr error
-
 	list, err := rawselect(m, exec, i, query, args...)
 	if err != nil {
-		if !NonFatalError(err) {
-			return nil, err
-		}
-		nonFatalErr = err
+		return nil, err
 	}
 
 	// Determine where the results are: written to i, or returned in list
@@ -205,7 +194,7 @@ func hookedselect(m *DbMap, exec SqlExecutor, i interface{}, query string,
 			}
 		}
 	}
-	return list, nonFatalErr
+	return list, nil
 }
 
 func rawselect(m *DbMap, exec SqlExecutor, i interface{}, query string,
@@ -215,8 +204,6 @@ func rawselect(m *DbMap, exec SqlExecutor, i interface{}, query string,
 		intoStruct      = true  // Selecting into a struct?
 		pointerElements = true  // Are the slice elements pointers (vs values)?
 	)
-
-	var nonFatalErr error
 
 	tableName := ""
 	var dynObj DynamicTable
@@ -271,10 +258,7 @@ func rawselect(m *DbMap, exec SqlExecutor, i interface{}, query string,
 	if intoStruct {
 		colToFieldIndex, err = columnToFieldIndex(m, t, tableName, cols)
 		if err != nil {
-			if !NonFatalError(err) {
-				return nil, err
-			}
-			nonFatalErr = err
+			return nil, err
 		}
 	}
 
@@ -355,5 +339,5 @@ func rawselect(m *DbMap, exec SqlExecutor, i interface{}, query string,
 		sliceValue.Set(reflect.MakeSlice(sliceValue.Type(), 0, 0))
 	}
 
-	return list, nonFatalErr
+	return list, nil
 }

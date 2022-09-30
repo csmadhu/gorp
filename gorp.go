@@ -267,10 +267,6 @@ func columnToFieldIndex(m *DbMap, t reflect.Type, name string, cols []string) ([
 		tableMapped = true
 	}
 
-	// Loop over column names and find field in i to bind to
-	// based on column name. all returned columns must match
-	// a field in the i struct
-	missingColNames := []string{}
 	for x := range cols {
 		colName := strings.ToLower(cols[x])
 		field, found := t.FieldByNameFunc(func(fieldName string) bool {
@@ -293,15 +289,6 @@ func columnToFieldIndex(m *DbMap, t reflect.Type, name string, cols []string) ([
 		})
 		if found {
 			colToFieldIndex[x] = field.Index
-		}
-		if colToFieldIndex[x] == nil {
-			missingColNames = append(missingColNames, colName)
-		}
-	}
-	if len(missingColNames) > 0 {
-		return colToFieldIndex, &NoFieldInTypeError{
-			TypeName:        t.Name(),
-			MissingColNames: missingColNames,
 		}
 	}
 	return colToFieldIndex, nil
