@@ -1,4 +1,4 @@
-module github.com/go-gorp/gorp/v3
+module github.com/csmadhu/gorp/v3
 
 go 1.19
 

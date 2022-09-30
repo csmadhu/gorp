@@ -2,10 +2,10 @@
 
 [![build status](https://img.shields.io/travis/go-gorp/gorp/master.svg)](http://travis-ci.org/go-gorp/gorp)
 [![code coverage](https://img.shields.io/coveralls/go-gorp/gorp.svg)](https://coveralls.io/r/go-gorp/gorp)
-[![issues](https://img.shields.io/github/issues/go-gorp/gorp.svg)](https://github.com/go-gorp/gorp/issues)
+[![issues](https://img.shields.io/github/issues/go-gorp/gorp.svg)](https://github.com/csmadhu/gorp/issues)
 [![godoc v1](https://img.shields.io/badge/godoc-v1-375EAB.svg)](https://godoc.org/gopkg.in/gorp.v1)
 [![godoc v2](https://img.shields.io/badge/godoc-v2-375EAB.svg)](https://godoc.org/gopkg.in/gorp.v2)
-[![godoc bleeding edge](https://img.shields.io/badge/godoc-bleeding--edge-375EAB.svg)](https://godoc.org/github.com/go-gorp/gorp)
+[![godoc bleeding edge](https://img.shields.io/badge/godoc-bleeding--edge-375EAB.svg)](https://godoc.org/github.com/csmadhu/gorp)
 
 ### Update 2016-11-13: Future versions
 
@@ -74,7 +74,7 @@ be bumped.
 The `master` branch is where all development is done, and breaking
 changes may happen from time to time.  That said, if you want to live
 on the bleeding edge and are comfortable updating your code when we
-make a breaking change, you may use `github.com/go-gorp/gorp` as your
+make a breaking change, you may use `github.com/csmadhu/gorp` as your
 import path.
 
 Check the version tags to see what's available.  We'll make a good

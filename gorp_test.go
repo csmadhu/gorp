@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
+//go:build integration
 // +build integration
 
 package gorp_test
@@ -23,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp/v3"
+	"github.com/csmadhu/gorp/v3"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -96,7 +97,7 @@ func (me *InvoiceTag) Rand() {
 	me.Updated = rand.Int63()
 }
 
-// See: https://github.com/go-gorp/gorp/issues/175
+// See: https://github.com/csmadhu/gorp/issues/175
 type AliasTransientField struct {
 	Id     int64  `db:"id"`
 	Bar    int64  `db:"-"`
@@ -2104,7 +2105,7 @@ func testWithTime(t *testing.T) {
 	}
 }
 
-// See: https://github.com/go-gorp/gorp/issues/86
+// See: https://github.com/csmadhu/gorp/issues/86
 func testEmbeddedTime(t *testing.T) {
 	dbmap := newDbMap()
 	dbmap.AddTable(EmbeddedTime{}).SetKeys(false, "Id")
