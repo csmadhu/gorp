@@ -90,6 +90,10 @@ func (d SqlServerDialect) AutoIncrInsertSuffix(col *ColumnMap) string {
 	return ""
 }
 
+func (d SqlServerDialect) CurrentDateTime() string {
+	return "GETDATE()"
+}
+
 func (d SqlServerDialect) CreateTableSuffix() string { return ";" }
 
 func (d SqlServerDialect) TruncateClause() string {

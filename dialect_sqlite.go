@@ -61,6 +61,10 @@ func (d SqliteDialect) AutoIncrInsertSuffix(col *ColumnMap) string {
 	return ""
 }
 
+func (d SqliteDialect) CurrentDateTime() string {
+	return "DATE('now')"
+}
+
 // Returns suffix
 func (d SqliteDialect) CreateTableSuffix() string {
 	return d.suffix

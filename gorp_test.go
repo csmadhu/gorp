@@ -24,6 +24,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/require"
+
 	"github.com/csmadhu/gorp/v3"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -82,12 +86,14 @@ func (me *Invoice) Rand() {
 }
 
 type InvoiceTag struct {
-	Id       int64 `db:"myid, primarykey, autoincrement"`
-	Created  int64 `db:"myCreated"`
-	Updated  int64 `db:"date_updated"`
-	Memo     string
-	PersonId int64 `db:"person_id"`
-	IsPaid   bool  `db:"is_Paid"`
+	Id         int64 `db:"myid, primarykey, autoincrement"`
+	Created    int64 `db:"myCreated"`
+	Updated    int64 `db:"date_updated"`
+	Memo       string
+	PersonId   int64     `db:"person_id"`
+	IsPaid     bool      `db:"is_Paid"`
+	AutoCreate time.Time `db:"created_at, autoCreateTime"`
+	AutoUpdate time.Time `db:"updated_at, autoUpdateTime"`
 }
 
 func (me *InvoiceTag) GetId() int64 { return me.Id }
@@ -1610,7 +1616,14 @@ func TestCrud(t *testing.T) {
 	inv := &Invoice{0, 100, 200, "first order", 0, true}
 	testCrudInternal(t, dbmap, inv)
 
-	invtag := &InvoiceTag{0, 300, 400, "some order", 33, false}
+	invtag := &InvoiceTag{
+		Id:       0,
+		Created:  300,
+		Updated:  400,
+		Memo:     "some order",
+		PersonId: 33,
+		IsPaid:   false,
+	}
 	testCrudInternal(t, dbmap, invtag)
 
 	foo := &AliasTransientField{BarStr: "some bar"}
@@ -1639,9 +1652,7 @@ func testCrudInternal(t *testing.T, dbmap *gorp.DbMap, val testable) {
 
 	// SELECT row
 	val2 := _get(dbmap, val, val.GetId())
-	if !reflect.DeepEqual(val, val2) {
-		t.Errorf("%v != %v", val, val2)
-	}
+	assertValue(t, val, val2, cmpopts.IgnoreFields(InvoiceTag{}, "AutoCreate", "AutoUpdate"))
 
 	// UPDATE row and SELECT
 	val.Rand()
@@ -1650,9 +1661,7 @@ func testCrudInternal(t *testing.T, dbmap *gorp.DbMap, val testable) {
 		t.Errorf("update 1 != %d", count)
 	}
 	val2 = _get(dbmap, val, val.GetId())
-	if !reflect.DeepEqual(val, val2) {
-		t.Errorf("%v != %v", val, val2)
-	}
+	assertValue(t, val, val2, cmpopts.IgnoreFields(InvoiceTag{}, "AutoCreate", "AutoUpdate"))
 
 	// Select *
 	rows, err := dbmap.Select(val, "select * from "+dbmap.Dialect.QuoteField(table.TableName))
@@ -1660,8 +1669,8 @@ func testCrudInternal(t *testing.T, dbmap *gorp.DbMap, val testable) {
 		t.Errorf("couldn't select * from %s err=%v", dbmap.Dialect.QuoteField(table.TableName), err)
 	} else if len(rows) != 1 {
 		t.Errorf("unexpected row count in %s: %d", dbmap.Dialect.QuoteField(table.TableName), len(rows))
-	} else if !reflect.DeepEqual(val, rows[0]) {
-		t.Errorf("select * result: %v != %v", val, rows[0])
+	} else {
+		assertValue(t, val, val2, cmpopts.IgnoreFields(InvoiceTag{}, "AutoCreate", "AutoUpdate"))
 	}
 
 	// DELETE row
@@ -2858,4 +2867,10 @@ func columnName(dbmap *gorp.DbMap, i interface{}, fieldName string) string {
 		return dbmap.Dialect.QuoteField(table.ColMap(fieldName).ColumnName)
 	}
 	return fieldName
+}
+
+func assertValue(t testing.TB, want, got interface{}, opts ...cmp.Option) {
+	opts = append(opts, cmpopts.EquateApproxTime(time.Minute))
+	diff := cmp.Diff(want, got, opts...)
+	require.Emptyf(t, diff, "mismatch (-want +got):\n%s", diff)
 }

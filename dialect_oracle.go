@@ -77,6 +77,10 @@ func (d OracleDialect) AutoIncrInsertSuffix(col *ColumnMap) string {
 	return ""
 }
 
+func (d OracleDialect) CurrentDateTime() string {
+	return "CURRENT_TIMESTAMP()"
+}
+
 // Returns suffix
 func (d OracleDialect) CreateTableSuffix() string {
 	return ""

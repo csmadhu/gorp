@@ -30,6 +30,9 @@ type Dialect interface {
 
 	AutoIncrInsertSuffix(col *ColumnMap) string
 
+	// current date and time function
+	CurrentDateTime() string
+
 	// string to append to "create table" statement for vendor specific
 	// table attributes
 	CreateTableSuffix() string

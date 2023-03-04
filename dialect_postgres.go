@@ -76,6 +76,10 @@ func (d PostgresDialect) AutoIncrInsertSuffix(col *ColumnMap) string {
 	return " returning " + d.QuoteField(col.ColumnName)
 }
 
+func (d PostgresDialect) CurrentDateTime() string {
+	return "now()"
+}
+
 // Returns suffix
 func (d PostgresDialect) CreateTableSuffix() string {
 	return d.suffix

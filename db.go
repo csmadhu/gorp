@@ -24,9 +24,8 @@ import (
 //
 // Example:
 //
-//     dialect := gorp.MySQLDialect{"InnoDB", "UTF8"}
-//     dbmap := &gorp.DbMap{Db: db, Dialect: dialect}
-//
+//	dialect := gorp.MySQLDialect{"InnoDB", "UTF8"}
+//	dbmap := &gorp.DbMap{Db: db, Dialect: dialect}
 type DbMap struct {
 	ctx context.Context
 
@@ -313,6 +312,8 @@ func (m *DbMap) readStructColumns(t reflect.Type) (cols []*ColumnMap, primaryKey
 			var isAuto bool
 			var isPK bool
 			var isNotNull bool
+			var isAutoCreateTime bool
+			var isAutoUpdateTime bool
 			for _, argString := range cArguments[1:] {
 				argString = strings.TrimSpace(argString)
 				arg := strings.SplitN(argString, ":", 2)
@@ -342,6 +343,10 @@ func (m *DbMap) readStructColumns(t reflect.Type) (cols []*ColumnMap, primaryKey
 					isAuto = true
 				case "notnull":
 					isNotNull = true
+				case "autoCreateTime":
+					isAutoCreateTime = true
+				case "autoUpdateTime":
+					isAutoUpdateTime = true
 				default:
 					panic(fmt.Sprintf("Unrecognized tag option for field %v: %v", f.Name, arg))
 				}
@@ -381,15 +386,17 @@ func (m *DbMap) readStructColumns(t reflect.Type) (cols []*ColumnMap, primaryKey
 				}
 			}
 			cm := &ColumnMap{
-				ColumnName:   columnName,
-				DefaultValue: defaultValue,
-				Transient:    columnName == "-",
-				fieldName:    f.Name,
-				gotype:       gotype,
-				isPK:         isPK,
-				isAutoIncr:   isAuto,
-				isNotNull:    isNotNull,
-				MaxSize:      maxSize,
+				ColumnName:       columnName,
+				DefaultValue:     defaultValue,
+				Transient:        columnName == "-",
+				fieldName:        f.Name,
+				gotype:           gotype,
+				isPK:             isPK,
+				isAutoIncr:       isAuto,
+				isNotNull:        isNotNull,
+				isAutoCreateTime: isAutoCreateTime,
+				isAutoUpdateTime: isAutoUpdateTime,
+				MaxSize:          maxSize,
 			}
 			if isPK {
 				primaryKey = append(primaryKey, cm)

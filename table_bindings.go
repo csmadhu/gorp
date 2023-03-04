@@ -126,6 +126,10 @@ func (t *TableMap) bindInsert(elem reflect.Value) (bindInstance, error) {
 						s2.WriteString(t.dbmap.Dialect.AutoIncrBindValue())
 						plan.autoIncrIdx = y
 						plan.autoIncrFieldName = col.fieldName
+					} else if col.isAutoCreateTime {
+						s2.WriteString(t.dbmap.Dialect.CurrentDateTime())
+					} else if col.isAutoUpdateTime {
+						s2.WriteString(t.dbmap.Dialect.CurrentDateTime())
 					} else {
 						if col.DefaultValue == "" {
 							s2.WriteString(t.dbmap.Dialect.BindVar(x))
@@ -174,21 +178,30 @@ func (t *TableMap) bindUpdate(elem reflect.Value, colFilter ColumnFilter) (bindI
 
 		for y := range t.Columns {
 			col := t.Columns[y]
+			if col.isAutoCreateTime {
+				continue // do not update auto Create column
+			}
+
 			if !col.isAutoIncr && !col.Transient && colFilter(col) {
 				if x > 0 {
 					s.WriteString(", ")
 				}
 				s.WriteString(t.dbmap.Dialect.QuoteField(col.ColumnName))
 				s.WriteString("=")
-				s.WriteString(t.dbmap.Dialect.BindVar(x))
+				if col.isAutoUpdateTime {
+					s.WriteString(t.dbmap.Dialect.CurrentDateTime())
+				} else {
+					s.WriteString(t.dbmap.Dialect.BindVar(x))
+					x++
+				}
 
 				if col == t.version {
 					plan.versField = col.fieldName
 					plan.argFields = append(plan.argFields, versFieldConst)
-				} else {
+				} else if !col.isAutoUpdateTime {
 					plan.argFields = append(plan.argFields, col.fieldName)
 				}
-				x++
+
 			}
 		}
 

@@ -98,6 +98,10 @@ func (d MySQLDialect) AutoIncrInsertSuffix(col *ColumnMap) string {
 	return ""
 }
 
+func (d MySQLDialect) CurrentDateTime() string {
+	return "now()"
+}
+
 // Returns engine=%s charset=%s  based on values stored on struct
 func (d MySQLDialect) CreateTableSuffix() string {
 	if d.Engine == "" || d.Encoding == "" {
