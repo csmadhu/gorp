@@ -307,13 +307,20 @@ func (m *DbMap) readStructColumns(t reflect.Type) (cols []*ColumnMap, primaryKey
 			// Option = OptionKey [ ':' OptionValue ]
 			cArguments := strings.Split(f.Tag.Get("db"), ",")
 			columnName := cArguments[0]
+
+			if columnName == "" {
+				columnName = f.Name
+			}
+
 			var maxSize int
 			var defaultValue string
 			var isAuto bool
 			var isPK bool
 			var isNotNull bool
-			var isAutoCreateTime bool
-			var isAutoUpdateTime bool
+
+			isAutoCreateTime := columnName == "CreatedAt"
+			isAutoUpdateTime := columnName == "UpdatedAt"
+
 			for _, argString := range cArguments[1:] {
 				argString = strings.TrimSpace(argString)
 				arg := strings.SplitN(argString, ":", 2)
@@ -347,12 +354,13 @@ func (m *DbMap) readStructColumns(t reflect.Type) (cols []*ColumnMap, primaryKey
 					isAutoCreateTime = true
 				case "autoUpdateTime":
 					isAutoUpdateTime = true
+				case "skipAutoCreateTime":
+					isAutoCreateTime = false
+				case "skipAutoUpdateTime":
+					isAutoUpdateTime = false
 				default:
 					panic(fmt.Sprintf("Unrecognized tag option for field %v: %v", f.Name, arg))
 				}
-			}
-			if columnName == "" {
-				columnName = f.Name
 			}
 
 			gotype := f.Type
@@ -385,6 +393,7 @@ func (m *DbMap) readStructColumns(t reflect.Type) (cols []*ColumnMap, primaryKey
 					gotype = reflect.TypeOf(v)
 				}
 			}
+
 			cm := &ColumnMap{
 				ColumnName:       columnName,
 				DefaultValue:     defaultValue,
