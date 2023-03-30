@@ -318,8 +318,8 @@ func (m *DbMap) readStructColumns(t reflect.Type) (cols []*ColumnMap, primaryKey
 			var isPK bool
 			var isNotNull bool
 
-			isAutoCreateTime := columnName == "CreatedAt"
-			isAutoUpdateTime := columnName == "UpdatedAt"
+			isAutoCreateTime := columnName == "created_at" || columnName == "CreatedAt"
+			isAutoUpdateTime := columnName == "updated_at" || columnName == "UpdatedAt"
 
 			for _, argString := range cArguments[1:] {
 				argString = strings.TrimSpace(argString)
