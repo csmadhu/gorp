@@ -92,6 +92,10 @@ type DbMap struct {
 	tablesDynamic map[string]*TableMap // tables that use same go-struct and different db table names
 	logger        GorpLogger
 	logPrefix     string
+
+	DisableAutoIncr       bool // disable autoIncr
+	DisableAutoUpdateTime bool // disable autoUpdateTime
+	DisableAutoCreateTime bool // disable autoCreateTime
 }
 
 func (m *DbMap) dynamicTableAdd(tableName string, tbl *TableMap) {

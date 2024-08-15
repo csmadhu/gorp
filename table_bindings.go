@@ -122,13 +122,13 @@ func (t *TableMap) bindInsert(elem reflect.Value) (bindInstance, error) {
 					}
 					s.WriteString(t.dbmap.Dialect.QuoteField(col.ColumnName))
 
-					if col.isAutoIncr {
+					if col.isAutoIncr && !t.dbmap.DisableAutoIncr {
 						s2.WriteString(t.dbmap.Dialect.AutoIncrBindValue())
 						plan.autoIncrIdx = y
 						plan.autoIncrFieldName = col.fieldName
-					} else if col.isAutoCreateTime {
+					} else if col.isAutoCreateTime && !t.dbmap.DisableAutoCreateTime {
 						s2.WriteString(t.dbmap.Dialect.CurrentDateTime())
-					} else if col.isAutoUpdateTime {
+					} else if col.isAutoUpdateTime && !t.dbmap.DisableAutoUpdateTime {
 						s2.WriteString(t.dbmap.Dialect.CurrentDateTime())
 					} else {
 						if col.DefaultValue == "" {
@@ -188,7 +188,7 @@ func (t *TableMap) bindUpdate(elem reflect.Value, colFilter ColumnFilter) (bindI
 				}
 				s.WriteString(t.dbmap.Dialect.QuoteField(col.ColumnName))
 				s.WriteString("=")
-				if col.isAutoUpdateTime {
+				if col.isAutoUpdateTime && !t.dbmap.DisableAutoUpdateTime {
 					s.WriteString(t.dbmap.Dialect.CurrentDateTime())
 				} else {
 					s.WriteString(t.dbmap.Dialect.BindVar(x))

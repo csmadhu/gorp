@@ -1345,7 +1345,8 @@ func TestRawSelect(t *testing.T) {
 
 	expected := &InvoicePersonView{inv1.Id, p1.Id, inv1.Memo, p1.FName, 0}
 
-	query := "select i." + columnName(dbmap, Invoice{}, "Id") + " InvoiceId, p." + columnName(dbmap, Person{}, "Id") + " PersonId, i." + columnName(dbmap, Invoice{}, "Memo") + ", p." + columnName(dbmap, Person{}, "FName") + " " +
+	query := "select i." + columnName(dbmap, Invoice{}, "Id") + " InvoiceId, p." + columnName(dbmap, Person{}, "Id") + " PersonId, i." + columnName(dbmap, Invoice{},
+		"Memo") + ", p." + columnName(dbmap, Person{}, "FName") + " " +
 		"from invoice_test i, person_test p " +
 		"where i." + columnName(dbmap, Invoice{}, "PersonId") + " = p." + columnName(dbmap, Person{}, "Id")
 	list := rawSelect(dbmap, InvoicePersonView{}, query)
@@ -1617,12 +1618,14 @@ func TestCrud(t *testing.T) {
 	testCrudInternal(t, dbmap, inv)
 
 	invtag := &InvoiceTag{
-		Id:       0,
-		Created:  300,
-		Updated:  400,
-		Memo:     "some order",
-		PersonId: 33,
-		IsPaid:   false,
+		Id:         0,
+		Created:    300,
+		Updated:    400,
+		Memo:       "some order",
+		PersonId:   33,
+		IsPaid:     false,
+		AutoCreate: time.Now().Add(-2 * time.Hour),
+		AutoUpdate: time.Now().Add(-2 * time.Hour),
 	}
 	testCrudInternal(t, dbmap, invtag)
 
@@ -1633,6 +1636,7 @@ func TestCrud(t *testing.T) {
 }
 
 func testCrudInternal(t *testing.T, dbmap *gorp.DbMap, val testable) {
+	dbmap.DisableAutoCreateTime = true
 	table, err := dbmap.TableFor(reflect.TypeOf(val).Elem(), false)
 	if err != nil {
 		t.Errorf("couldn't call TableFor: val=%v err=%v", val, err)
@@ -1653,6 +1657,10 @@ func testCrudInternal(t *testing.T, dbmap *gorp.DbMap, val testable) {
 	// SELECT row
 	val2 := _get(dbmap, val, val.GetId())
 	assertValue(t, val, val2, cmpopts.IgnoreFields(InvoiceTag{}, "AutoCreate", "AutoUpdate"))
+	if invoiceTag, ok := val2.(*InvoiceTag); ok {
+		assertValue(t, invoiceTag.AutoCreate, time.Now().Add(-2*time.Hour))
+		assertValue(t, invoiceTag.AutoUpdate, time.Now())
+	}
 
 	// UPDATE row and SELECT
 	val.Rand()
@@ -1952,11 +1960,13 @@ func TestSelectVal(t *testing.T) {
 	}
 
 	// SelectInt/Str with named parameters
-	i64 = selectInt(dbmap, "select "+columnName(dbmap, TableWithNull{}, "Int64")+" from "+tableName(dbmap, TableWithNull{})+" where "+columnName(dbmap, TableWithNull{}, "Str")+"=:abc", map[string]string{"abc": "abc"})
+	i64 = selectInt(dbmap, "select "+columnName(dbmap, TableWithNull{}, "Int64")+" from "+tableName(dbmap, TableWithNull{})+" where "+columnName(dbmap, TableWithNull{}, "Str")+"=:abc",
+		map[string]string{"abc": "abc"})
 	if i64 != 78 {
 		t.Errorf("int64 %d != 78", i64)
 	}
-	ns = selectNullStr(dbmap, "select "+columnName(dbmap, TableWithNull{}, "Str")+" from "+tableName(dbmap, TableWithNull{})+" where "+columnName(dbmap, TableWithNull{}, "Int64")+"=:num", map[string]int{"num": 78})
+	ns = selectNullStr(dbmap, "select "+columnName(dbmap, TableWithNull{}, "Str")+" from "+tableName(dbmap, TableWithNull{})+" where "+columnName(dbmap, TableWithNull{}, "Int64")+"=:num",
+		map[string]int{"num": 78})
 	if !reflect.DeepEqual(ns, sql.NullString{"abc", true}) {
 		t.Errorf("nullstr %v != abc,true", ns)
 	}
@@ -2173,7 +2183,8 @@ func TestInvoicePersonView(t *testing.T) {
 	dbmap.Insert(inv1)
 
 	// Run your query
-	query := "select i." + columnName(dbmap, Invoice{}, "Id") + " InvoiceId, p." + columnName(dbmap, Person{}, "Id") + " PersonId, i." + columnName(dbmap, Invoice{}, "Memo") + ", p." + columnName(dbmap, Person{}, "FName") + " " +
+	query := "select i." + columnName(dbmap, Invoice{}, "Id") + " InvoiceId, p." + columnName(dbmap, Person{}, "Id") + " PersonId, i." + columnName(dbmap, Invoice{},
+		"Memo") + ", p." + columnName(dbmap, Person{}, "FName") + " " +
 		"from invoice_test i, person_test p " +
 		"where i." + columnName(dbmap, Invoice{}, "PersonId") + " = p." + columnName(dbmap, Person{}, "Id")
 
@@ -2653,7 +2664,7 @@ func initDbMapBench() *gorp.DbMap {
 func initDbMap() *gorp.DbMap {
 	dbmap := newDbMap()
 	dbmap.AddTableWithName(Invoice{}, "invoice_test").SetKeys(true, "Id")
-	dbmap.AddTableWithName(InvoiceTag{}, "invoice_tag_test") //key is set via primarykey attribute
+	dbmap.AddTableWithName(InvoiceTag{}, "invoice_tag_test") // key is set via primarykey attribute
 	dbmap.AddTableWithName(AliasTransientField{}, "alias_trans_field_test").SetKeys(true, "id")
 	dbmap.AddTableWithName(OverriddenInvoice{}, "invoice_override_test").SetKeys(false, "Id")
 	dbmap.AddTableWithName(Person{}, "person_test").SetKeys(true, "Id").SetVersionCol("Version")
@@ -2661,8 +2672,8 @@ func initDbMap() *gorp.DbMap {
 	dbmap.AddTableWithName(IdCreated{}, "id_created_test").SetKeys(true, "Id")
 	dbmap.AddTableWithName(TypeConversionExample{}, "type_conv_test").SetKeys(true, "Id")
 	dbmap.AddTableWithName(WithEmbeddedStruct{}, "embedded_struct_test").SetKeys(true, "Id")
-	//dbmap.AddTableWithName(WithEmbeddedStructConflictingEmbeddedMemberNames{}, "embedded_struct_conflict_name_test").SetKeys(true, "Id")
-	//dbmap.AddTableWithName(WithEmbeddedStructSameMemberName{}, "embedded_struct_same_member_name_test").SetKeys(true, "Id")
+	// dbmap.AddTableWithName(WithEmbeddedStructConflictingEmbeddedMemberNames{}, "embedded_struct_conflict_name_test").SetKeys(true, "Id")
+	// dbmap.AddTableWithName(WithEmbeddedStructSameMemberName{}, "embedded_struct_same_member_name_test").SetKeys(true, "Id")
 	dbmap.AddTableWithName(WithEmbeddedStructBeforeAutoincrField{}, "embedded_struct_before_autoincr_test").SetKeys(true, "Id")
 	dbmap.AddTableDynamic(&dynTableInst1, "").SetKeys(true, "Id").AddIndex("TenantInst1Index", "Btree", []string{"Name"}).SetUnique(true)
 	dbmap.AddTableDynamic(&dynTableInst2, "").SetKeys(true, "Id").AddIndex("TenantInst2Index", "Btree", []string{"Name"}).SetUnique(true)
