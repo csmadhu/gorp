@@ -198,7 +198,7 @@ func (t *TableMap) bindUpdate(elem reflect.Value, colFilter ColumnFilter) (bindI
 				if col == t.version {
 					plan.versField = col.fieldName
 					plan.argFields = append(plan.argFields, versFieldConst)
-				} else if !col.isAutoUpdateTime {
+				} else if !col.isAutoUpdateTime || t.dbmap.DisableAutoUpdateTime {
 					plan.argFields = append(plan.argFields, col.fieldName)
 				}
 
