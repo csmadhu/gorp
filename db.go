@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sync"
 )
 
 // DbMap is the root gorp mapping object. Create one of these for each
@@ -96,6 +97,23 @@ type DbMap struct {
 	DisableAutoIncr       bool // disable autoIncr
 	DisableAutoUpdateTime bool // disable autoUpdateTime
 	DisableAutoCreateTime bool // disable autoCreateTime
+
+	attrsMu sync.RWMutex
+	attrs map[string]any
+}
+
+func (m *DbMap) GetAttr(key string) any {
+	m.attrsMu.RLock()
+	defer m.attrsMu.RUnlock()
+
+	return m.attrs[key]
+}
+
+func (m *DbMap) SetAttr(key string, value any) {
+	m.attrsMu.Lock()
+	defer m.attrsMu.Unlock()
+
+	m.attrs[key] = value
 }
 
 func (m *DbMap) dynamicTableAdd(tableName string, tbl *TableMap) {
