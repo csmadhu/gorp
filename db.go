@@ -113,6 +113,10 @@ func (m *DbMap) SetAttr(key string, value any) {
 	m.attrsMu.Lock()
 	defer m.attrsMu.Unlock()
 
+	if m.attrs == nil {
+		m.attrs = make(map[string]any)
+	}
+
 	m.attrs[key] = value
 }
 
