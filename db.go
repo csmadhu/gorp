@@ -258,6 +258,9 @@ func (m *DbMap) AddTableWithNameAndSchema(i interface{}, schema string, name str
 		table := m.tables[i]
 		if table.gotype == t {
 			table.TableName = name
+			table.SchemaName = schema
+			table.dbmap = m
+			table.ResetSql()
 			return table
 		}
 	}
